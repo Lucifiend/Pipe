@@ -66,7 +66,7 @@ flowchart LR
 - Go 1.26+
 - Node.js 20+
 - npm
-- (Optional) `migrate` CLI for manual migration management
+- `migrate` CLI for manual migration management
 
 ## Local Development Setup
 
@@ -86,7 +86,7 @@ This starts:
 
 ### 2) Configure backend environment
 
-Create `/home/runner/work/Pipe/Pipe/backend/.env`:
+Create `backend/.env`:
 
 ```env
 POSTGRES_DB=******localhost:5432/cicd?sslmode=disable
@@ -103,7 +103,7 @@ RABBITMQ_URL=******localhost:5672/
 ### 3) Run backend
 
 ```bash
-cd /home/runner/work/Pipe/Pipe/backend
+cd backend/
 go run cmd/api/main.go
 ```
 
@@ -111,7 +111,7 @@ Backend listens on `http://localhost:8080`.
 
 ### 4) Configure frontend environment
 
-Create `/home/runner/work/Pipe/Pipe/frontend/.env.local`:
+Create `frontend/.env.local`:
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8080
@@ -120,7 +120,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8080
 ### 5) Run frontend
 
 ```bash
-cd /home/runner/work/Pipe/Pipe/frontend
+cd /frontend
 npm install
 npm run dev
 ```
@@ -131,9 +131,9 @@ Frontend runs on `http://localhost:3000`.
 
 Migration files are located in:
 
-- `/home/runner/work/Pipe/Pipe/backend/db/migrations`
+- `backend/db/migrations/`
 
-Helper commands (from `/home/runner/work/Pipe/Pipe/backend`):
+Helper commands (from `backend/`):
 
 ```bash
 make migrate-up
