@@ -89,13 +89,14 @@ This starts:
 Create `backend/.env`:
 
 ```env
-POSTGRES_DB=******localhost:5432/cicd?sslmode=disable
+POSTGRES_DB=postgres://root:secret@localhost:5432/cicd?sslmode=disable
 GITHUB_CLIENT_ID=your_github_oauth_client_id
 GITHUB_CLIENT_SECRET=your_github_oauth_client_secret
 GITHUB_CALLBACK_URL=http://localhost:3000/auth/callback
-JWT_SECRET=replace_with_a_strong_secret
+JWT_SECRET=replace_with_a_strong_secret_with_len_32
 WEBHOOK_BASE_URL=https://your-public-backend-url
-RABBITMQ_URL=******localhost:5672/
+RABBITMQ_URL=amqp://guest:guest@localhost:5672/
+REDIS_URL=redis://localhost:6379
 ```
 
 > `WEBHOOK_BASE_URL` must be reachable by GitHub for webhook delivery.
