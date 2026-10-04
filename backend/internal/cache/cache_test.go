@@ -1,13 +1,11 @@
-package cache
+package cache_test
 
 import (
 	"context"
 	"testing"
 	"time"
 	"errors"
-
-	// "github.com/stretchr/testify/assert"
-	// "github.com/stretchr/testify/require"
+	"Frank2006x/Pipe/internal/cache"
 )
 
 type TestUser struct {
@@ -16,19 +14,21 @@ type TestUser struct {
 	Email    string `json:"email"`
 }
 
-func getTestCache(t *testing.T) *Cache {
+func getTestCache(t *testing.T) *cache.Cache {
 	t.Helper()
-	c, err := New("redis://localhost:6379")
+	c, err := cache.New("redis://localhost:6379")
 	if err != nil {
 		t.Skipf("Skipping Redis test (Redis not reachable on localhost:6379): %v", err)
 	}
-
+	t.Cleanup(func() {
+        _ = c.Close()
+    })
 	return c
 }
 
 func TestCache_SetAndGet(t *testing.T) {
 	c := getTestCache(t)
-	defer c.Close()
+	// defer c.Close()
 
 	ctx := context.Background()
 	key := "test:user:1"
@@ -38,9 +38,9 @@ func TestCache_SetAndGet(t *testing.T) {
 		Email:    "frank@example.com",
 	}
 
-	// Cleanup
-	_ = c.Del(ctx, key)
-	defer func() { _ = c.Del(ctx, key) }()
+	// Cleanup, redundant with t.Cleanup at parent
+	// _ = c.Del(ctx, key)
+	// defer func() { _ = c.Del(ctx, key) }()
 
 	// 1. Set in cache
 	err := c.Set(ctx, key, user, 10*time.Second)
@@ -64,21 +64,21 @@ func TestCache_SetAndGet(t *testing.T) {
 
 func TestCache_CacheMiss(t *testing.T) {
 	c := getTestCache(t)
-	defer c.Close()
+	// defer c.Close()
 
 	ctx := context.Background()
 	key := "test:nonexistent:key"
 
 	var retrieved TestUser
 	err := c.Get(ctx, key, &retrieved)
-	if !errors.Is(err, ErrCacheMiss){
-		t.Errorf("Got %v, Want %v", err, ErrCacheMiss)
+	if !errors.Is(err, cache.ErrCacheMiss){
+		t.Errorf("Got %v, Want %v", err, cache.ErrCacheMiss)
 	}
 }
 
 func TestCache_Del(t *testing.T) {
 	c := getTestCache(t)
-	defer c.Close()
+	// defer c.Close()
 
 	ctx := context.Background()
 	key := "test:user:delete"
@@ -99,14 +99,14 @@ func TestCache_Del(t *testing.T) {
 	var retrieved TestUser
 
 	err = c.Get(ctx, key, &retrieved)
-	if !errors.Is(err, ErrCacheMiss){
-		t.Errorf("Got %v, Want %v", err, ErrCacheMiss)
+	if !errors.Is(err, cache.ErrCacheMiss){
+		t.Errorf("Got %v, Want %v", err, cache.ErrCacheMiss)
 	}
 }
 
 func TestCache_TTL_Expiration(t *testing.T) {
 	c := getTestCache(t)
-	defer c.Close()
+	// defer c.Close()
 
 	ctx := context.Background()
 	key := "test:user:ttl"
@@ -123,7 +123,42 @@ func TestCache_TTL_Expiration(t *testing.T) {
 
 	var retrieved TestUser
 	err = c.Get(ctx, key, &retrieved)
-	if !errors.Is(err, ErrCacheMiss){
-		t.Errorf("Got %v, Want %v", err, ErrCacheMiss)
+	if !errors.Is(err, cache.ErrCacheMiss){
+		t.Errorf("Got %v, Want %v", err, cache.ErrCacheMiss)
+	}
+}
+
+func BenchmarkCache_Set(b *testing.B) {
+	c, err := cache.New("redis://localhost:6379")
+	if err != nil {
+		b.Skipf("Skipping Redis benchmark: %v", err)
+	}
+	defer c.Close()
+
+	ctx := context.Background()
+	user := TestUser{ID: 100, Username: "bench_user", Email: "bench@example.com"}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = c.Set(ctx, "bench:key:set", user, 10*time.Second)
+	}
+}
+
+func BenchmarkCache_Get(b *testing.B) {
+	c, err := cache.New("redis://localhost:6379")
+	if err != nil {
+		b.Skipf("Skipping Redis benchmark: %v", err)
+	}
+	defer c.Close()
+
+	ctx := context.Background()
+	key := "bench:key:get"
+	user := TestUser{ID: 100, Username: "bench_user", Email: "bench@example.com"}
+	_ = c.Set(ctx, key, user, 1*time.Hour)
+
+	var retrieved TestUser
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = c.Get(ctx, key, &retrieved)
 	}
 }
