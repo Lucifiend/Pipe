@@ -44,7 +44,7 @@ flowchart LR
 ## Repository Structure
 
 ```text
-/home/runner/work/Pipe/Pipe
+/Pipe
 ├── backend/                # Go API, queue integration, worker, DB migrations
 │   ├── cmd/api/            # Backend entrypoint
 │   ├── internal/           # Services, handlers, middleware, executor, worker
